@@ -9,26 +9,17 @@ struct ContentView: View {
     @Environment(\.colorScheme) var colorScheme
 
     // Computed properties for adaptive colors
-    private var resetButtonGradient: LinearGradient {
-        let colors: [Color]
-        if colorScheme == .dark {
-            // A dark gray gradient for dark mode
-            colors = [Color(white: 0.25), Color(white: 0.2)]
-        } else {
-            // Original accent color for light mode
-            colors = [Color.accentColor, Color.accentColor.opacity(0.8)]
-        }
-        return LinearGradient(gradient: Gradient(colors: colors), startPoint: .topLeading, endPoint: .bottomTrailing)
+    private var resetBackgroundColor: Color {
+        colorScheme == .dark ? Color.white.opacity(0.15) : Color.gray.opacity(0.15)
     }
     
-    private var resetButtonShadowColor: Color {
-        // No shadow in dark mode, accent color shadow in light mode
-        colorScheme == .dark ? .clear : Color.accentColor.opacity(0.3)
+    private var resetForegroundColor: Color {
+        colorScheme == .dark ? .white : .primary
     }
     
     private var fabColor: Color {
-        // Dark gray in dark mode, accent color in light mode
-        colorScheme == .dark ? Color(white: 0.25) : Color.accentColor
+        // Use green as the primary action color
+        return .green
     }
 
     var body: some View {
@@ -47,7 +38,7 @@ struct ContentView: View {
                 
                 VStack(spacing: 0) {
                     // Custom Header
-                    HStack {
+                            HStack {
                         // Reset Button
                         Button {
                             HapticManager.shared.impact(.medium)
@@ -61,17 +52,16 @@ struct ContentView: View {
                                 Text("Reset")
                                     .font(.system(size: 16, weight: .medium))
                             }
-                            .foregroundColor(.white)
+                            .foregroundColor(resetForegroundColor)
                             .padding(.horizontal, 16)
                             .padding(.vertical, 8)
                             .background(
                                 RoundedRectangle(cornerRadius: 20, style: .continuous)
-                                    .fill(resetButtonGradient)
-                                    .shadow(color: resetButtonShadowColor, radius: 4, x: 0, y: 2)
+                                    .fill(resetBackgroundColor)
                             )
-                        }
+                                }
 
-                        Spacer()
+                                Spacer()
 
                         // The old Add Button is removed from here
                     }
@@ -119,11 +109,11 @@ struct ContentView: View {
                     Spacer()
                     HStack {
                         Spacer()
-                        Button {
+                    Button {
                             HapticManager.shared.impact(.light)
-                            showingAddAlert = true
-                        } label: {
-                            Image(systemName: "plus")
+                        showingAddAlert = true
+                    } label: {
+                        Image(systemName: "plus")
                                 .font(.system(size: 24, weight: .bold))
                                 .frame(width: 60, height: 60)
                                 .background(fabColor)
