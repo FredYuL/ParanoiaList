@@ -20,7 +20,7 @@ This app gives you peace of mind before leaving home, with a simple and customiz
 
 For any issues, feedback, or feature requests:
 
-- 📧 Contact: **yuliang@example.com**
+- 📧 Contact: **liang636363@gmail.com**
 - 🐞 [Open a GitHub Issue](https://github.com/FredYuL/ParanoiaList/issues)
 
 We’d love to hear from you!
