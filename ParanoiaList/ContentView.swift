@@ -3,7 +3,7 @@ import SwiftUI
 struct ContentView: View {
     @StateObject private var store = ParanoiaStore()
     @State private var newItemText: String = ""
-    @State private var showingAddAlert = false
+    @State private var showingAddSheet = false
     @State private var animateCards = false
     
     @Environment(\.colorScheme) var colorScheme
@@ -84,8 +84,8 @@ struct ContentView: View {
                     
                     // 项目列表
                     List {
-                        ForEach(store.items, id: \.id) { item in
-                            SimpleParanoiaCardView(item: item, store: store)
+                        ForEach($store.items) { $item in
+                            SimpleParanoiaCardView(item: $item, store: store)
                                 .id(item.id) // 强制刷新绑定，避免重用 bug
                                 .listRowBackground(Color.clear)
                                 .listRowSeparator(.hidden)
@@ -110,36 +110,83 @@ struct ContentView: View {
                     HStack {
                         Spacer()
                     Button {
-                            HapticManager.shared.impact(.light)
-                        showingAddAlert = true
+                            showingAddSheet = true
                     } label: {
                         Image(systemName: "plus")
                                 .font(.system(size: 24, weight: .bold))
                                 .frame(width: 60, height: 60)
-                                .background(fabColor)
+                                .background(Color.green)
                                 .foregroundColor(.white)
                                 .clipShape(Circle())
                                 .shadow(radius: 4, y: 2)
                         }
                         .padding()
-                        .transition(.scale.animation(.spring()))
+                        .zIndex(1)
                     }
+                }
+
+                // 自定义添加弹窗
+                if showingAddSheet {
+                    Color.black.opacity(0.2)
+                        .ignoresSafeArea()
+                        .transition(.opacity)
+
+                    VStack(spacing: 20) {
+                        Text("Add New Item")
+                            .font(.title2)
+                            .fontWeight(.bold)
+                            .foregroundColor(.primary)
+
+                        TextField("What do you want to track?", text: $newItemText)
+                            .padding()
+                            .background(.thinMaterial)
+                            .cornerRadius(16)
+                            .font(.system(size: 18, weight: .medium, design: .rounded))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 16)
+                                    .stroke(Color.accentColor.opacity(0.15), lineWidth: 1)
+                            )
+                            .autocapitalization(.sentences)
+                            .disableAutocorrection(false)
+
+                        HStack(spacing: 16) {
+                            Button("Cancel") {
+                                withAnimation { showingAddSheet = false }
+                                newItemText = ""
+                            }
+                            .foregroundColor(.secondary)
+                            .padding(.vertical, 10)
+                            .frame(maxWidth: .infinity)
+                            .background(Color.clear)
+                            .cornerRadius(12)
+
+                            Button("Add") {
+                                if !newItemText.trimmingCharacters(in: .whitespaces).isEmpty {
+                                    HapticManager.shared.notification(.success)
+                                    store.addItem(title: newItemText.trimmingCharacters(in: .whitespaces))
+                                    withAnimation { showingAddSheet = false }
+                                    newItemText = ""
+                                }
+                            }
+                            .foregroundColor(.white)
+                            .padding(.vertical, 10)
+                            .frame(maxWidth: .infinity)
+                            .background(Color.green)
+                            .cornerRadius(12)
+                            .disabled(newItemText.trimmingCharacters(in: .whitespaces).isEmpty)
+                            .opacity(newItemText.trimmingCharacters(in: .whitespaces).isEmpty ? 0.5 : 1)
+                        }
+                    }
+                    .padding(28)
+                    .background(.ultraThinMaterial)
+                    .cornerRadius(28)
+                    .shadow(radius: 24, y: 8)
+                    .padding(.horizontal, 32)
+                    .transition(.scale.combined(with: .opacity))
+                    .zIndex(2)
                 }
             }
             .navigationBarHidden(true)
-            .alert("Add New Item", isPresented: $showingAddAlert) {
-                TextField("What do you want to track?", text: $newItemText)
-                Button("Add") {
-                    if !newItemText.trimmingCharacters(in: .whitespaces).isEmpty {
-                        HapticManager.shared.notification(.success)
-                        store.addItem(title: newItemText.trimmingCharacters(in: .whitespaces))
-                        newItemText = ""
-                    }
-                }
-                Button("Cancel", role: .cancel) {
-                    newItemText = ""
-                }
-            }
             .onAppear {
                 withAnimation(.easeInOut(duration: 0.5)) {
                     animateCards = true
@@ -147,6 +194,7 @@ struct ContentView: View {
             }
         }
         .navigationViewStyle(.stack)
+        .animation(.spring(), value: showingAddSheet)
     }
     
     private func deleteItems(offsets: IndexSet) {
@@ -244,7 +292,7 @@ struct SimpleStatsView: View {
 }
 
 struct SimpleParanoiaCardView: View {
-    let item: ParanoiaItem
+    @Binding var item: ParanoiaItem
     @ObservedObject var store: ParanoiaStore
     @State private var isPressed = false
     @State private var showCheckmark = false // Re-purposed for checkmark animation
