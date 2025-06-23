@@ -30,3 +30,13 @@ We’d love to hear from you!
 ## 📜 License
 
 MIT License. See `LICENSE` file for details.
+
+---
+
+## 🔒 Additional Notice
+
+This project is licensed under the MIT License.
+
+However, redistribution of this app (or any modified version) **on any app store (e.g. Apple App Store, Google Play)** without clear attribution and prior permission from the original author **Yu Liang** is strictly discouraged.
+
+Please respect the spirit of open source. You are welcome to learn from or contribute to the code, but **do not publish clones under a different name or author identity.**
