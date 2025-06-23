@@ -1,8 +1,22 @@
 import SwiftUI
 
+struct RoundedCorner: Shape {
+    var radius: CGFloat = 20.0
+    var corners: UIRectCorner = .allCorners
+
+    func path(in rect: CGRect) -> Path {
+        let path = UIBezierPath(
+            roundedRect: rect,
+            byRoundingCorners: corners,
+            cornerRadii: CGSize(width: radius, height: radius)
+        )
+        return Path(path.cgPath)
+    }
+}
+
 struct ContentView: View {
     @StateObject private var store = ParanoiaStore()
-    @State private var newItemText: String = ""
+    @State private var newItemText = ""
     @State private var showingAddSheet = false
     @State private var animateCards = false
     
@@ -86,7 +100,6 @@ struct ContentView: View {
                     List {
                         ForEach($store.items) { $item in
                             SimpleParanoiaCardView(item: $item, store: store)
-                                .id(item.id) // 强制刷新绑定，避免重用 bug
                                 .listRowBackground(Color.clear)
                                 .listRowSeparator(.hidden)
                                 .listRowInsets(EdgeInsets(top: 8, leading: 20, bottom: 8, trailing: 20))
@@ -127,63 +140,16 @@ struct ContentView: View {
 
                 // 自定义添加弹窗
                 if showingAddSheet {
-                    Color.black.opacity(0.2)
-                        .ignoresSafeArea()
-                        .transition(.opacity)
-
-                    VStack(spacing: 20) {
-                        Text("Add New Item")
-                            .font(.title2)
-                            .fontWeight(.bold)
-                            .foregroundColor(.primary)
-
-                        TextField("What do you want to track?", text: $newItemText)
-                            .padding()
-                            .background(.thinMaterial)
-                            .cornerRadius(16)
-                            .font(.system(size: 18, weight: .medium, design: .rounded))
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 16)
-                                    .stroke(Color.accentColor.opacity(0.15), lineWidth: 1)
-                            )
-                            .autocapitalization(.sentences)
-                            .disableAutocorrection(false)
-
-                        HStack(spacing: 16) {
-                            Button("Cancel") {
-                                withAnimation { showingAddSheet = false }
-                                newItemText = ""
-                            }
-                            .foregroundColor(.secondary)
-                            .padding(.vertical, 10)
-                            .frame(maxWidth: .infinity)
-                            .background(Color.clear)
-                            .cornerRadius(12)
-
-                            Button("Add") {
-                                if !newItemText.trimmingCharacters(in: .whitespaces).isEmpty {
-                                    HapticManager.shared.notification(.success)
-                                    store.addItem(title: newItemText.trimmingCharacters(in: .whitespaces))
-                                    withAnimation { showingAddSheet = false }
-                                    newItemText = ""
-                                }
-                            }
-                            .foregroundColor(.white)
-                            .padding(.vertical, 10)
-                            .frame(maxWidth: .infinity)
-                            .background(Color.green)
-                            .cornerRadius(12)
-                            .disabled(newItemText.trimmingCharacters(in: .whitespaces).isEmpty)
-                            .opacity(newItemText.trimmingCharacters(in: .whitespaces).isEmpty ? 0.5 : 1)
+                    AddItemSheet(
+                        isPresented: $showingAddSheet,
+                        text: $newItemText
+                    ) {
+                        if !newItemText.trimmingCharacters(in: .whitespaces).isEmpty {
+                            HapticManager.shared.notification(.success)
+                            store.addItem(title: newItemText.trimmingCharacters(in: .whitespaces))
                         }
                     }
-                    .padding(28)
-                    .background(.ultraThinMaterial)
-                    .cornerRadius(28)
-                    .shadow(radius: 24, y: 8)
-                    .padding(.horizontal, 32)
-                    .transition(.scale.combined(with: .opacity))
-                    .zIndex(2)
+                    .zIndex(10)
                 }
             }
             .navigationBarHidden(true)
@@ -419,5 +385,112 @@ extension ParanoiaStatus {
 struct ContentView_Previews: PreviewProvider {
     static var previews: some View {
         ContentView()
+    }
+}
+
+struct AddItemSheet: View {
+    @Binding var isPresented: Bool
+    @Binding var text: String
+    var onAdd: () -> Void
+
+    @FocusState private var isFocused: Bool
+
+    var body: some View {
+        ZStack {
+            // 背景遮罩
+            Color.black.opacity(0.2)
+                .ignoresSafeArea()
+                .onTapGesture { withAnimation { isPresented = false } }
+
+            VStack(spacing: 0) {
+                VStack(spacing: 24) {
+                    // 顶部图标
+                    Image(systemName: "plus.circle.fill")
+                        .font(.system(size: 40, weight: .bold))
+                        .foregroundColor(.accentColor)
+                        .padding(.top, 8)
+
+                    // 标题
+                    Text("Add New Item")
+                        .font(.custom("PlayfairDisplay-Bold", size: 24))
+                        .foregroundColor(.primary)
+
+                    // 输入框
+                    TextField("What do you want to track?", text: $text)
+                        .padding()
+                        .background(.ultraThinMaterial)
+                        .cornerRadius(16)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 16)
+                                .stroke(Color.accentColor.opacity(0.12), lineWidth: 1)
+                        )
+                        .font(.custom("PlayfairDisplay-Regular", size: 18))
+                        .focused($isFocused)
+                        .shadow(color: .black.opacity(0.04), radius: 2, y: 1)
+                    // 新增padding
+                    Spacer().frame(height: 15)
+                }
+                .padding(.horizontal, 28)
+                .padding(.top, 32)
+                .background(
+                    RoundedCorner(radius: 20, corners: [.topLeft, .topRight])
+                        .fill(.ultraThinMaterial)
+                )
+
+                // 分割线
+                Divider()
+
+                // 横向按钮
+                HStack(spacing: 0) {
+                    Button(action: {
+                        withAnimation { isPresented = false }
+                        text = ""
+                    }) {
+                        Text("Cancel")
+                            .font(.system(size: 18, weight: .medium))
+                            .foregroundColor(.secondary)
+                            .frame(maxWidth: .infinity, minHeight: 52)
+                            .contentShape(Rectangle())
+                    }
+
+                    Rectangle()
+                        .fill(Color.secondary.opacity(0.15))
+                        .frame(width: 1, height: 32)
+                        .padding(.vertical, 10)
+
+                    Button(action: {
+                        if !text.trimmingCharacters(in: .whitespaces).isEmpty {
+                            onAdd()
+                            withAnimation { isPresented = false }
+                            text = ""
+                        }
+                    }) {
+                        Text("Add")
+                            .font(.system(size: 18, weight: .semibold))
+                            .foregroundColor(.white)
+                            .frame(maxWidth: .infinity, minHeight: 52)
+                            .background(
+                                text.trimmingCharacters(in: .whitespaces).isEmpty
+                                    ? Color.green.opacity(0.5)
+                                    : Color.green
+                            )
+                            .clipShape(RoundedRectangle(cornerRadius: 0))
+                            .contentShape(Rectangle())
+                    }
+                    .disabled(text.trimmingCharacters(in: .whitespaces).isEmpty)
+                }
+                .background(
+                    RoundedCorner(radius: 20, corners: [.bottomLeft, .bottomRight])
+                        .fill(.ultraThinMaterial)
+                )
+            }
+            .frame(maxWidth: 400)
+            .clipShape(RoundedCorner(radius: 20, corners: [.allCorners]))
+            .shadow(color: .black.opacity(0.12), radius: 24, y: 8)
+            .padding(.horizontal, 32)
+            .transition(.scale.combined(with: .opacity))
+            .onAppear { DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { isFocused = true } }
+        }
+        .animation(.spring(), value: isPresented)
     }
 }
