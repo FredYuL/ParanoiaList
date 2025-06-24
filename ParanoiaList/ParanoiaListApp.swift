@@ -11,7 +11,18 @@ import SwiftUI
 struct ParanoiaListApp: App {
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            TabView {
+                ContentView()
+                    .tabItem {
+                        Image(systemName: "checkmark.circle")
+                        Text("Checklist")
+                    }
+                CBTTipsView()
+                    .tabItem {
+                        Image(systemName: "lightbulb")
+                        Text("CBT Tips")
+                    }
+            }
         }
     }
 }

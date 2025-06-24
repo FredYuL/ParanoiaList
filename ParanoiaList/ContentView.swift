@@ -449,12 +449,6 @@ extension ParanoiaStatus {
     }
 }
 
-struct ContentView_Previews: PreviewProvider {
-    static var previews: some View {
-        ContentView()
-    }
-}
-
 struct AddItemSheet: View {
     @Binding var isPresented: Bool
     @Binding var text: String
@@ -621,5 +615,11 @@ struct ShareCard: View {
         .shadow(color: .black.opacity(0.12), radius: 24, y: 8)
         .padding(.horizontal, 32)
         .transition(.scale.combined(with: .opacity))
+    }
+}
+
+struct ContentView_Previews: PreviewProvider {
+    static var previews: some View {
+        ContentView()
     }
 }
