@@ -19,6 +19,8 @@ struct ContentView: View {
     @State private var newItemText = ""
     @State private var showingAddSheet = false
     @State private var animateCards = false
+    @State private var userColorScheme: ColorScheme? = nil
+    @State private var showingShareSheet = false
     
     @Environment(\.colorScheme) var colorScheme
 
@@ -78,6 +80,39 @@ struct ContentView: View {
                                 Spacer()
 
                         // The old Add Button is removed from here
+
+                        // 切换模式
+                        Button {
+                            withAnimation {
+                                if userColorScheme == .dark {
+                                    userColorScheme = .light
+                                } else {
+                                    userColorScheme = .dark
+                                }
+                            }
+                        } label: {
+                            Image(systemName: userColorScheme == .dark ? "moon.fill" : "sun.max.fill")
+                                .font(.system(size: 22, weight: .bold))
+                                .foregroundColor(userColorScheme == .dark ? .white : .black)
+                                .padding(10)
+                                .background(
+                                    Circle()
+                                        .fill(Color(.systemBackground).opacity(0.7))
+                                )
+                        }
+
+                        Button {
+                            showingShareSheet = true
+                        } label: {
+                            Image(systemName: "square.and.arrow.up")
+                                .font(.system(size: 22, weight: .bold))
+                                .foregroundColor(colorScheme == .dark ? .white : .black)
+                                .padding(10)
+                                .background(
+                                    Circle()
+                                        .fill(Color(.systemBackground).opacity(0.7))
+                                )
+                        }
                     }
                     .padding(.horizontal, 20)
                     .padding(.top, 8)
@@ -151,6 +186,37 @@ struct ContentView: View {
                     }
                     .zIndex(10)
                 }
+
+                if showingShareSheet {
+                    let unchecked = store.items.filter { $0.status == .unchecked }
+                    let allChecked = unchecked.isEmpty
+                    let uncheckedTitles = unchecked.map { $0.title }
+                    ShareCard(
+                        allChecked: allChecked,
+                        uncheckedTitles: uncheckedTitles
+                    ) {
+                        // 分享内容
+                        let shareText: String
+                        if allChecked {
+                            shareText = "I have completed all my checklist items! ✅"
+                        } else {
+                            shareText = "Still need to check:\n" + uncheckedTitles.map { "• \($0)" }.joined(separator: "\n")
+                        }
+                        let av = UIActivityViewController(activityItems: [shareText], applicationActivities: nil)
+                        if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+                           let rootVC = windowScene.windows.first?.rootViewController {
+                            rootVC.present(av, animated: true)
+                        }
+                        showingShareSheet = false
+                    }
+                    .zIndex(20)
+                    .onTapGesture {} // 防止点击卡片关闭
+                    // 背景遮罩
+                    Color.black.opacity(0.2)
+                        .ignoresSafeArea()
+                        .onTapGesture { withAnimation { showingShareSheet = false } }
+                        .zIndex(19)
+                }
             }
             .navigationBarHidden(true)
             .onAppear {
@@ -159,6 +225,7 @@ struct ContentView: View {
                 }
             }
         }
+        .preferredColorScheme(userColorScheme)
         .navigationViewStyle(.stack)
         .animation(.spring(), value: showingAddSheet)
     }
@@ -492,5 +559,67 @@ struct AddItemSheet: View {
             .onAppear { DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { isFocused = true } }
         }
         .animation(.spring(), value: isPresented)
+    }
+}
+
+struct ShareCard: View {
+    let allChecked: Bool
+    let uncheckedTitles: [String]
+    let shareAction: () -> Void
+
+    var body: some View {
+        VStack(spacing: 24) {
+            Image(systemName: allChecked ? "checkmark.seal.fill" : "exclamationmark.circle")
+                .font(.system(size: 40, weight: .bold))
+                .foregroundColor(allChecked ? .green : .orange)
+                .padding(.top, 8)
+
+            Text(allChecked ? "All Done!" : "Still Unchecked")
+                .font(.title2)
+                .fontWeight(.bold)
+                .foregroundColor(.primary)
+
+            if allChecked {
+                Text("I have completed all my checklist items!")
+                    .font(.body)
+                    .foregroundColor(.secondary)
+                    .multilineTextAlignment(.center)
+            } else {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Still need to check:")
+                        .font(.body)
+                        .foregroundColor(.secondary)
+                    ForEach(uncheckedTitles, id: \.self) { title in
+                        HStack {
+                            Image(systemName: "circle")
+                                .font(.caption)
+                                .foregroundColor(.gray)
+                            Text(title)
+                                .font(.body)
+                                .foregroundColor(.primary)
+                        }
+                    }
+                }
+            }
+
+            Button(action: shareAction) {
+                HStack {
+                    Image(systemName: "square.and.arrow.up")
+                    Text("Share")
+                        .fontWeight(.semibold)
+                }
+                .foregroundColor(.white)
+                .padding(.vertical, 12)
+                .frame(maxWidth: .infinity)
+                .background(Color.green)
+                .cornerRadius(14)
+            }
+        }
+        .padding(32)
+        .background(.ultraThinMaterial)
+        .cornerRadius(28)
+        .shadow(color: .black.opacity(0.12), radius: 24, y: 8)
+        .padding(.horizontal, 32)
+        .transition(.scale.combined(with: .opacity))
     }
 }
