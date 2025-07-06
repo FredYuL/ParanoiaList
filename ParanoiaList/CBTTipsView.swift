@@ -1,5 +1,6 @@
 import SwiftUI
 import Foundation
+import UIKit
 
 let cbtTips: [String] = [
     "This is a false alarm from my brain. I don't need to act on it.",
@@ -135,6 +136,26 @@ struct CBTTipsView: View {
                                 .scaleEffect(animateCard ? 1 : 0.8)
                                 .animation(.spring(response: 0.6, dampingFraction: 0.7).delay(0.35), value: animateCard)
 
+                                Button(action: {
+                                    shareTipCard(tip: cbtTips[todayTipIndex()])
+                                }) {
+                                    HStack {
+                                        Image(systemName: "square.and.arrow.up")
+                                        Text("Share")
+                                    }
+                                    .font(.system(size: 16, weight: .semibold))
+                                    .foregroundColor(.white)
+                                    .padding(.vertical, 10)
+                                    .padding(.horizontal, 32)
+                                    .background(Color.accentColor)
+                                    .cornerRadius(16)
+                                    .shadow(radius: 2, y: 1)
+                                }
+                                .padding(.top, 8)
+                                .opacity(animateCard ? 1 : 0)
+                                .scaleEffect(animateCard ? 1 : 0.8)
+                                .animation(.spring(response: 0.6, dampingFraction: 0.7).delay(0.38), value: animateCard)
+
                                 if showCopied {
                                     Text("Copied!")
                                         .font(.caption)
@@ -191,5 +212,45 @@ struct CBTTipsView: View {
 struct CBTTipsView_Previews: PreviewProvider {
     static var previews: some View {
         CBTTipsView()
+    }
+}
+
+struct TipShareCard: View {
+    let tip: String
+    var body: some View {
+        ZStack {
+            LinearGradient(colors: [.purple, .blue], startPoint: .top, endPoint: .bottom)
+            VStack(spacing: 24) {
+                Text("Everyday Tip")
+                    .font(.title2.bold())
+                    .foregroundColor(.white)
+                Text(tip)
+                    .font(.title3)
+                    .foregroundColor(.white)
+                    .multilineTextAlignment(.center)
+                Spacer()
+                Text("From ParanoiaList")
+                    .font(.footnote)
+                    .foregroundColor(.white.opacity(0.7))
+            }
+            .padding()
+        }
+        .frame(width: 340, height: 220)
+        .cornerRadius(24)
+        .shadow(radius: 8)
+    }
+}
+
+@MainActor
+func shareTipCard(tip: String) {
+    let card = TipShareCard(tip: tip)
+    let renderer = ImageRenderer(content: card)
+    renderer.scale = 3
+    if let uiImage = renderer.uiImage {
+        let activityVC = UIActivityViewController(activityItems: [uiImage], applicationActivities: nil)
+        if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+           let rootVC = windowScene.windows.first?.rootViewController {
+            rootVC.present(activityVC, animated: true, completion: nil)
+        }
     }
 }

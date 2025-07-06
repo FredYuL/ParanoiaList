@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 struct RoundedCorner: Shape {
     var radius: CGFloat = 20.0
@@ -94,19 +95,6 @@ struct ContentView: View {
                             Image(systemName: userColorScheme == .dark ? "moon.fill" : "sun.max.fill")
                                 .font(.system(size: 22, weight: .bold))
                                 .foregroundColor(userColorScheme == .dark ? .white : .black)
-                                .padding(10)
-                                .background(
-                                    Circle()
-                                        .fill(Color(.systemBackground).opacity(0.7))
-                                )
-                        }
-
-                        Button {
-                            showingShareSheet = true
-                        } label: {
-                            Image(systemName: "square.and.arrow.up")
-                                .font(.system(size: 22, weight: .bold))
-                                .foregroundColor(colorScheme == .dark ? .white : .black)
                                 .padding(10)
                                 .background(
                                     Circle()
@@ -621,5 +609,18 @@ struct ShareCard: View {
 struct ContentView_Previews: PreviewProvider {
     static var previews: some View {
         ContentView()
+    }
+}
+
+@MainActor
+func shareChecklistImage(items: [ParanoiaItem]) {
+    let card = ShareCardView(items: items)
+    let renderer = ImageRenderer(content: card)
+    if let uiImage = renderer.uiImage {
+        let av = UIActivityViewController(activityItems: [uiImage], applicationActivities: nil)
+        if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+           let rootVC = windowScene.windows.first?.rootViewController {
+            rootVC.present(av, animated: true)
+        }
     }
 }
