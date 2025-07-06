@@ -7,7 +7,11 @@
 import Foundation
 
 class ParanoiaStore: ObservableObject {
-    @Published var items: [ParanoiaItem] = []
+    @Published var items: [ParanoiaItem] = [] {
+        didSet {
+            save()
+        }
+    }
 
     private let storageKey = "paranoia_items"
 

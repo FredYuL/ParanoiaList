@@ -122,7 +122,7 @@ struct ContentView: View {
                     // 项目列表
                     List {
                         ForEach($store.items) { $item in
-                            SimpleParanoiaCardView(item: $item, store: store)
+                            SimpleParanoiaCardView(item: $item)
                                 .listRowBackground(Color.clear)
                                 .listRowSeparator(.hidden)
                                 .listRowInsets(EdgeInsets(top: 8, leading: 20, bottom: 8, trailing: 20))
@@ -314,17 +314,21 @@ struct SimpleStatsView: View {
 
 struct SimpleParanoiaCardView: View {
     @Binding var item: ParanoiaItem
-    @ObservedObject var store: ParanoiaStore
     @State private var isPressed = false
     @State private var showCheckmark = false // Re-purposed for checkmark animation
 
     var body: some View {
         Button(action: {
             HapticManager.shared.impact(.light)
-
             withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
-                store.toggleStatus(for: item)
-                // This will trigger the animation based on item.status change
+                if item.status == .unchecked {
+                    item.status = .checked
+                    item.lastChecked = Date()
+                } else {
+                    item.status = .unchecked
+                    item.lastChecked = nil
+                }
+                // 这里不用再调用 store.toggleStatus(for: item)
             }
         }) {
             HStack(spacing: 16) {
