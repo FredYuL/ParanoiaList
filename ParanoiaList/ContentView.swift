@@ -83,18 +83,20 @@ struct ContentView: View {
                         // The old Add Button is removed from here
 
                         // 切换模式
+                        let isDark = (userColorScheme ?? colorScheme) == .dark
+
                         Button {
                             withAnimation {
-                                if userColorScheme == .dark {
+                                if isDark {
                                     userColorScheme = .light
                                 } else {
                                     userColorScheme = .dark
                                 }
                             }
                         } label: {
-                            Image(systemName: userColorScheme == .dark ? "moon.fill" : "sun.max.fill")
+                            Image(systemName: isDark ? "moon.fill" : "sun.max.fill")
                                 .font(.system(size: 22, weight: .bold))
-                                .foregroundColor(userColorScheme == .dark ? .white : .black)
+                                .foregroundColor(isDark ? .white : .black)
                                 .padding(10)
                                 .background(
                                     Circle()
